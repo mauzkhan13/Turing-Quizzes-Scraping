@@ -1,3 +1,5 @@
+# Importing necessary libraries
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
@@ -16,32 +18,59 @@ import re
 import time
 from selenium.common.exceptions import (NoSuchElementException, StaleElementReferenceException, TimeoutException)
 
+#Setting Chrome options and opening the URL
+
 chrome_options = webdriver.ChromeOptions()
 url = 'https://developers.turing.com/dashboard/takechallenge'
 driver = webdriver.Chrome(executable_path='C:\chromedriver.exe', options=chrome_options)
 driver.get(url)
 driver.maximize_window()
 
+#Finding the Username and Password elements, entering the credentials and logging in
 
-login = driver.find_element(By.XPATH, '//*[@id="root"]/div/div/div[2]/div[1]/form/div[1]/div/input')
-login.send_keys('@gmail.com')
+userName = driver.find_element(By.XPATH, '//*[@id="root"]/div/div/div[2]/div[1]/form/div[1]/div/input')
+userName.send_keys('username')
 sleep(3)
-pswd = driver.find_element(By.XPATH, '//*[@id="root"]/div/div/div[2]/div[1]/form/div[2]/div/input')
-pswd.send_keys('password')
+password = driver.find_element(By.XPATH, '//*[@id="root"]/div/div/div[2]/div[1]/form/div[2]/div/input')
+password.send_keys('password')
 sleep(2)
-okay = driver.find_element(By.XPATH, '//*[@id="root"]/div/div/div[2]/div[1]/form/div[3]/div/button').click()
+login= driver.find_element(By.XPATH, '//*[@id="root"]/div/div/div[2]/div[1]/form/div[3]/div/button').click()
 sleep(2)
 
+#Clicking on the Quizzes option and selecting the first quiz on the page
+quizzes_options = driver.find_element(By.XPATH,"//a[@class="icon navigation-icon"][2]").click()
 
-# Set the path to the Tesseract executable
+quiz_name = driver.find_element(By.XPATH,'//span[@class="turing-ui-v2-mcq-tests-item-title"]')
+print(quiz_name)
+
+quiz_time = driver.find_element(By.XPATH,'//span[@class="turing-ui-v2-mcq-tests-item-time-estimate"]')
+print(quiz_time)
+
+#Starting the quiz by clicking on the 'Start' button
+start_quiz = driver.find_element(By.XPATH,'//button[@class="ant-btn turing-ui-v2-action-item turing-ui-v2-action-item-start ant-btn-link"]').click()
+
+
+# Setting the path to the Tesseract executable and initializing variables to store questions and answer options
+
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 questions = []
 answer_options = []
 
+#Setting up a folder path to store screenshots
+
+folder_path = r'C:'
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
+
+#Initializing a flag to determine if all questions have been answered
 
 finished = False
+
+#Looping through the questions until all have been answered
+
 while not finished:
+    ## Finding and scrolling to all images on the page, taking a screenshot, and performing OCR on the top-left portion of the screenshot to extract the question text
     while True:
         try:
             image_elements = WebDriverWait(driver, 10).until(EC.visibility_of_all_elements_located((By.XPATH, '//*[@id="html-question"]/img')))
@@ -62,11 +91,12 @@ while not finished:
         left_top_cut = screenshot.crop((0, 0, cut_width, cut_height))
 
         text = pytesseract.image_to_string(left_top_cut).strip()
-        text = re.sub(r'(Question \d+ of \d+)|(Something wrong with the question or blank content?.*?Report a problem\.)', '', text).strip()
-
-        text = text.replace('7 Turing', '').replace('Data Engineer', '').replace('\n', '').strip()
         questions.append(text)
-    
+
+        sleep(3)
+        # Save the screenshot with a unique filename
+        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
+        driver.save_screenshot(os.path.join(folder_path, f'screenshot_{timestamp}.png'))
             
         try:
             options = WebDriverWait(driver, 4).until(EC.presence_of_all_elements_located((By.XPATH, '//div[@class="ql-editor"]/p')))
@@ -105,5 +135,5 @@ while not finished:
 
 # Create the DataFrame
 df = pd.DataFrame(zip(questions,answer_options), columns=['Questions','Answers'])
-path = r'C:\Users\Mauz Khan\Desktop\My Scrapy\Google Cloud Platform.csv'
+path = r'C:Turing.csv'
 df.to_csv(path, index=False)

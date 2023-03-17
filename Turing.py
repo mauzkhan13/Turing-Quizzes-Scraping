@@ -38,7 +38,7 @@ login= driver.find_element(By.XPATH, '//*[@id="root"]/div/div/div[2]/div[1]/form
 sleep(2)
 
 #Clicking on the Quizzes option and selecting the first quiz on the page
-quizzes_options = driver.find_element(By.XPATH,"//a[@class="icon navigation-icon"][2]").click()
+quizzes_options = driver.find_element(By.XPATH,'//a[@class="icon navigation-icon"][2]').click()
 
 quiz_name = driver.find_element(By.XPATH,'//span[@class="turing-ui-v2-mcq-tests-item-title"]')
 print(quiz_name)
